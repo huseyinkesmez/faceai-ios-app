@@ -1,0 +1,147 @@
+# CI Pipeline Proposal for FaceAI iOS App Test Automation
+
+## Overview
+This document outlines a proposed CI pipeline using GitHub Actions for automated testing of the FaceAI iOS application.
+
+## Pipeline Configuration (.github/workflows/ios_tests.yml)
+
+```yaml
+name: iOS App Tests
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    - cron: '0 0 * * *'  # Daily run at midnight UTC
+
+jobs:
+  test:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10']
+        ios-version: ['16.0', '17.0']
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        npm install -g appium
+        npm install -g appium-doctor
+
+    - name: Start Appium Server
+      run: |
+        appium &
+        sleep 5  # Wait for server to start
+
+    - name: Run Tests
+      run: |
+        python -m pytest test_paywall.py test_home.py --html=report.html
+
+    - name: Upload Test Report
+      if: always()  # Run even if tests fail
+      uses: actions/upload-artifact@v3
+      with:
+        name: test-report-${{ matrix.python-version }}-ios${{ matrix.ios-version }}
+        path: |
+          report.html
+          reports/
+
+## Key Features
+
+1. Trigger Conditions:
+   - On push to main and develop branches
+   - On pull requests to main and develop
+   - Daily scheduled runs
+
+2. Environment Matrix:
+   - Multiple Python versions (3.9, 3.10)
+   - Multiple iOS versions (16.0, 17.0)
+   - macOS latest runner
+
+3. Test Execution:
+   - Automated setup of Python and Node.js
+   - Appium server management
+   - Parallel test execution
+   - HTML report generation
+
+4. Artifacts and Reports:
+   - HTML test reports
+   - Separate reports for each environment combination
+   - Always uploaded, even on test failure
+
+## Future Enhancements
+
+1. Test Result Notifications:
+   - Slack integration for test results
+   - Email notifications for failures
+   - GitHub status checks integration
+
+2. Test Optimization:
+   - Test parallelization
+   - Selective test execution based on changes
+   - Test retry mechanism for flaky tests
+
+3. Environment Management:
+   - iOS simulator management
+   - Custom iOS device farm integration
+   - Environment-specific configurations
+
+4. Security:
+   - Secrets management for credentials
+   - Environment variable encryption
+   - Access control for sensitive data
+
+## Implementation Steps
+
+1. Initial Setup:
+   - Create .github/workflows directory
+   - Add ios_tests.yml configuration
+   - Configure repository secrets
+
+2. Repository Configuration:
+   - Enable GitHub Actions
+   - Set up branch protection rules
+   - Configure required status checks
+
+3. Documentation:
+   - Update README with CI information
+   - Add troubleshooting guide
+   - Document environment setup
+
+4. Monitoring:
+   - Set up monitoring for pipeline execution
+   - Configure alerts for failures
+   - Track test execution metrics
+
+## Success Metrics
+
+1. Pipeline Performance:
+   - Build time < 10 minutes
+   - Test execution time < 15 minutes
+   - Zero false positives
+
+2. Code Quality:
+   - 100% test execution
+   - No flaky tests
+   - Comprehensive test coverage
+
+3. Team Productivity:
+   - Reduced manual testing time
+   - Quick feedback on changes
+   - Automated release validation 
