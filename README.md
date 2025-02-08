@@ -39,23 +39,6 @@ npm install -g appium
 appium
 ```
 
-## Project Structure
-```
-FaceAI_Appium_Python/
-├── pages/
-│   ├── __init__.py
-│   ├── base.py
-│   ├── home_page.py
-│   └── paywall_page.py
-├── setup/
-│   ├── __init__.py
-│   └── capabilities.py
-├── reports/          
-├── test_home.py
-├── test_paywall.py
-├── requirements.txt
-└── README.md
-```
 
 ## Test Cases
 
